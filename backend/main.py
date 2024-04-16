@@ -41,7 +41,7 @@ async def read_csv(upload):
         return pd.read_csv(io.StringIO(data.decode('utf-8-sig')))
     except (UnicodeDecodeError, ValueError):
         # pandas parser and empty-file errors are ValueError subclasses.
-        raise HTTPException(status_code=400, detail='The upload must contain a valid UTF-8 CSV table.')
+        raise HTTPException(status_code=400, detail='The upload must contain a valid UTF-8 CSV table.') from None
 
 
 @app.get('/')
@@ -61,7 +61,7 @@ async def column_suggestions(input_table: UploadFile = File(...),
             return mapper.suggest_column_mapping(input_info, template_info, revision_template, clean_suggestion(suggestion))
         return mapper.suggest_column_mapping(input_info, template_info, main_template)
     except ProviderError as error:
-        raise HTTPException(status_code=502, detail=f'{error} Try again or check the provider configuration.')
+        raise HTTPException(status_code=502, detail=f'{error} Try again or check the provider configuration.') from error
 
 
 @app.post('/column_mapper/')

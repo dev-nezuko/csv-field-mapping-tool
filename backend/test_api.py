@@ -47,7 +47,8 @@ class SuggestionApiTests(unittest.IsolatedAsyncioTestCase):
     async def post(self, files=None, data=None):
         transport = httpx.ASGITransport(app=main.app)
         async with httpx.AsyncClient(transport=transport, base_url='http://test') as client:
-            return await client.post('/suggest_column_mapping/', files=files or {'input_table': SOURCE, 'template_table': TARGET}, data=data)
+            files = files or {'input_table': SOURCE, 'template_table': TARGET}
+            return await client.post('/suggest_column_mapping/', files=files, data=data)
 
     async def test_returns_notes_and_code_as_text(self):
         response = await self.post()

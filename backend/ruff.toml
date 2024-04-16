@@ -1,0 +1,12 @@
+target-version = "py312"
+line-length = 140
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.File", "fastapi.Form"]
+
+[lint.per-file-ignores]
+# Prompt text reads better as long lines than as wrapped string fragments.
+"utils/templates.py" = ["E501"]

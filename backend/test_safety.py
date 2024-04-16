@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import httpx
+
 import main
 
 spec = importlib.util.spec_from_file_location('retired_runner', Path(__file__).parent / 'utils/code_executor.py')
