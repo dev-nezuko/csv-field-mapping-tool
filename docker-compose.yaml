@@ -4,8 +4,15 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     env_file:
-      - ./backend/.env
+      # Optional: without it the API reports that no provider is configured.
+      - path: ./backend/.env
+        required: false
   frontend:
-    build: ./front_end
+    build:
+      context: ./front_end
+      args:
+        VITE_API_BASE_URL: http://localhost:8000
     ports:
       - "127.0.0.1:3000:80"
+    depends_on:
+      - web
