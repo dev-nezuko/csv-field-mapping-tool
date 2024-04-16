@@ -1,26 +1,12 @@
-import pandas as pd
-import numpy as np
-import datetime
-import traceback
+"""The old in-process Python runner is intentionally unavailable."""
 
-def code_runner(code,df):
-    """
-    Executes given code on a DataFrame, expecting a result in 'mapped_df'.
 
-    Args:
-        code (str): Code referencing 'input_df' as the DataFrame.
-        df (pd.DataFrame): Input DataFrame.
+class CodeExecutionDisabled(RuntimeError):
+    pass
 
-    Returns:
-        pd.DataFrame: Processed DataFrame or None if an error occurs.
-    """
-    code = code.replace("\\n"," \n")
-    namespace = {"input_df":df,"pd":pd,'mapped_df':None,"datetime":datetime,"np":np}
-    try:
-        exec(code, namespace)
-        mapped_df = namespace['mapped_df']
-        return mapped_df
-    except Exception as e:
-        print(f"Error executing code: {e}")
-        tb = traceback.format_exc().split("\n")
-        return(tb[2:])
+
+def code_runner(code, df):
+    """Retain the old call boundary without executing or inspecting its inputs."""
+    raise CodeExecutionDisabled(
+        'Generated-code execution is disabled. An isolated executor is required.'
+    )

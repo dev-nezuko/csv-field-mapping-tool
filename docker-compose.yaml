@@ -1,16 +1,11 @@
-version: '3.8'
-
 services:
   web:
-    image: 009356742988.dkr.ecr.us-east-1.amazonaws.com/zero-test:latest
+    build: ./backend
     ports:
-      - "8000:8000"
-    volumes:
-      - data-volume:/app/data
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - ./backend/.env
   frontend:
-    image: 009356742988.dkr.ecr.us-east-1.amazonaws.com/zero-test-frontend:latest
+    build: ./front_end
     ports:
-      - "80:80"
-
-volumes:
-  data-volume:
+      - "127.0.0.1:3000:80"

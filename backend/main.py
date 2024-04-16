@@ -1,106 +1,75 @@
-from fastapi import FastAPI, UploadFile, HTTPException,File,Form
-from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
-from starlette.responses import JSONResponse
 import io
-import pandas as pd
-from utils import (ColumnMapper,
-                    main_template,
-                    revision_template,
-                    code_runner,
-                    clean_suggestion,
-                    )
+import os
+from pathlib import Path
 
-app = FastAPI()
+from dotenv import load_dotenv
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 
-# Enabling CORS if required
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+MAX_CSV_BYTES = 2 * 1024 * 1024
+app = FastAPI(title='CSV mapping preview')
+app.add_middleware(CORSMiddleware, allow_origins=['http://localhost:3000'],
+                   allow_credentials=False, allow_methods=['GET', 'POST'], allow_headers=['*'])
 
-mapper = ColumnMapper()  # Create instance of ColumnMapper
 
-@app.get("/")
+def _get_mapper():
+    load_dotenv(Path(__file__).with_name('.env'))
+    key = os.getenv('OPENAI_API_KEY', '').strip()
+    if not key or key in {'replace-me', 'your-key-here'}:
+        raise HTTPException(status_code=503, detail='Suggestion provider is not configured. The browser example works without a provider.')
+    try:
+        from utils.llm_script import ColumnMapper
+        mapper = ColumnMapper()
+    except ImportError:
+        raise HTTPException(status_code=503, detail='Suggestion provider dependencies are unavailable.')
+    if mapper is None or not hasattr(mapper, 'llm'):
+        raise HTTPException(status_code=503, detail='Suggestion provider could not be initialized.')
+    return mapper
+
+
+async def _read_csv(upload):
+    if not (upload.filename or '').lower().endswith('.csv'):
+        raise HTTPException(status_code=400, detail='Choose CSV files for both inputs.')
+    data = await upload.read(MAX_CSV_BYTES + 1)
+    if len(data) > MAX_CSV_BYTES:
+        raise HTTPException(status_code=413, detail='Each CSV must be no larger than 2 MiB.')
+    try:
+        import pandas as pd
+        return pd.read_csv(io.StringIO(data.decode('utf-8-sig')))
+    except (UnicodeDecodeError, ValueError):
+        raise HTTPException(status_code=400, detail='The upload must contain a valid UTF-8 CSV table.')
+
+
+@app.get('/')
 async def home():
-    return JSONResponse(content={"Message": "Backend is running"}, status_code=200)
+    return {'message': 'CSV mapping preview backend', 'code_execution_enabled': False}
 
-@app.post("/suggest_column_mapping/")
+
+@app.post('/suggest_column_mapping/')
 async def column_suggestions(input_table: UploadFile = File(...),
                              template_table: UploadFile = File(...),
-                             suggestion: str  = Form(None)
-                             ):
-        
-    """
-    Generate column mapping suggestions between two CSVs using OpenAI's LLM.
-    
-    Args:
-        input_table (UploadFile): CSV file containing main data.
-        template_table (UploadFile): CSV file representing the desired column structure.
-        suggestion (str, optional): Prior suggestion for refining the recommendation.
-    
-    Returns:
-        JSONResponse: Column mapping suggestions and potential code.
-    """
+                             suggestion: str = Form(None)):
+    mapper = _get_mapper()
+    frame = await _read_csv(input_table)
+    template = await _read_csv(template_table)
+    from utils.templates import main_template, revision_template
+    from utils.suggestion_cleaner import clean_suggestion
     try:
-        if not (input_table.filename.endswith('.csv') and template_table.filename.endswith('.csv')):
-            raise Exception("Invalid file Type. Only .csv files are allowed.")
-        
-        # Read the uploaded files into pandas dataframes
-        df_a = pd.read_csv(io.StringIO(input_table.file.read().decode("utf-8")))
-        df_b = pd.read_csv(io.StringIO(template_table.file.read().decode("utf-8")))
-
-        # Get column info for each dataframe
-        info_a = mapper.get_column_info(df_a)
-        info_b = mapper.get_column_info(df_b)
-
-        # Get the column mapping suggestions
+        input_info = mapper.get_column_info(frame)
+        template_info = mapper.get_column_info(template)
         if suggestion:
-            suggestion = clean_suggestion(suggestion)
-
-            response = mapper.suggest_column_mapping(info_a, info_b, revision_template,suggestion)
-        else:
-            response = mapper.suggest_column_mapping(info_a, info_b, main_template)
-
-
-        return JSONResponse(content=response, status_code=200)
-
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    
-
-@app.post("/column_mapper/")
-async def column_mapper(code: str= Form(...),input_table: UploadFile = File(...)):
-    """
-    Apply user-defined code on a provided CSV to perform data manipulations.
-    
-    Args:
-        code (str): Python code to execute on the CSV.
-        input_table (UploadFile): CSV file containing the data.
-    
-    Returns:
-        JSONResponse: Processed data in record format after executing the code.
-    """
-    try:
-
-        if not input_table.filename.endswith('.csv'):
-            raise Exception("Invalid file Type. Only .csv files are allowed.")
-        
-        # Read the uploaded files into pandas dataframes
-        df_a = pd.read_csv(io.StringIO(input_table.file.read().decode("utf-8")))
-        response = code_runner(code,df_a)
-        # pdb.set_trace()
-        if isinstance(response, pd.DataFrame):
-            response = response.to_dict(orient='records')
-        return JSONResponse(content=response,status_code=200)
-    
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+            return mapper.suggest_column_mapping(input_info, template_info, revision_template, clean_suggestion(suggestion))
+        return mapper.suggest_column_mapping(input_info, template_info, main_template)
+    except Exception:
+        raise HTTPException(status_code=400, detail='Could not create a preview from those CSV files.')
 
 
+@app.post('/column_mapper/')
+async def column_mapper():
+    # Accept no executable input or uploads on the retired execution path.
+    raise HTTPException(status_code=503, detail='Code execution is disabled. This application provides suggestions and code previews only.')
 
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+if __name__ == '__main__':
+    import uvicorn
+    uvicorn.run('main:app', host='127.0.0.1', port=8000, reload=True)

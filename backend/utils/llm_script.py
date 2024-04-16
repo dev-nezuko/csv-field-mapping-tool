@@ -55,7 +55,7 @@ class ColumnMapper:
                 column_info = {
                     "column_name": col,
                     "data_type": str(df[col].dtype),
-                    "sample_values": df[col].sample(5).tolist()
+                    "sample_values": df[col].sample(min(5, len(df))).tolist()
                 }
                 column_info_list.append(column_info)
             return column_info_list

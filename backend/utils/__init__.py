@@ -1,5 +1,1 @@
-from .llm_script import ColumnMapper
-from .templates import main_template,revision_template
-from .code_executor import code_runner
-from .suggestion_cleaner import clean_suggestion
-from .database import SessionLocal,engine,Base
+"""Internal helpers; importing the API must not initialize an LLM or database."""
