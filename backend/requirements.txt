@@ -1,8 +1,6 @@
-fastapi==0.103.2
-langchain==0.0.315
-openai==0.28.1
-pandas==2.0.3
-uvicorn==0.23.2
-python-dotenv
-python-multipart
-SQLAlchemy==2.0.22
+fastapi==0.162.2
+uvicorn==0.54.0
+pandas==3.1.1
+openai==3.48.0
+python-dotenv==1.2.4
+python-multipart==0.0.33

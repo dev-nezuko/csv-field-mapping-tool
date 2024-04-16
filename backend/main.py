@@ -2,41 +2,45 @@ import io
 import os
 from pathlib import Path
 
+import pandas as pd
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
+from utils.llm_script import ColumnMapper, ProviderError, get_column_info
+from utils.suggestion_cleaner import clean_suggestion
+from utils.templates import main_template, revision_template
+
+load_dotenv(Path(__file__).with_name('.env'))
+
 MAX_CSV_BYTES = 2 * 1024 * 1024
+PLACEHOLDER_KEYS = {'', 'replace-me', 'your-key-here'}
+CORS_ORIGINS = [origin.strip() for origin in
+                os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',')
+                if origin.strip()]
+
 app = FastAPI(title='CSV mapping preview')
-app.add_middleware(CORSMiddleware, allow_origins=['http://localhost:3000'],
+app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
                    allow_credentials=False, allow_methods=['GET', 'POST'], allow_headers=['*'])
 
 
-def _get_mapper():
-    load_dotenv(Path(__file__).with_name('.env'))
+def get_mapper():
     key = os.getenv('OPENAI_API_KEY', '').strip()
-    if not key or key in {'replace-me', 'your-key-here'}:
+    if key in PLACEHOLDER_KEYS:
         raise HTTPException(status_code=503, detail='Suggestion provider is not configured. The browser example works without a provider.')
-    try:
-        from utils.llm_script import ColumnMapper
-        mapper = ColumnMapper()
-    except ImportError:
-        raise HTTPException(status_code=503, detail='Suggestion provider dependencies are unavailable.')
-    if mapper is None or not hasattr(mapper, 'llm'):
-        raise HTTPException(status_code=503, detail='Suggestion provider could not be initialized.')
-    return mapper
+    return ColumnMapper(api_key=key)
 
 
-async def _read_csv(upload):
+async def read_csv(upload):
     if not (upload.filename or '').lower().endswith('.csv'):
         raise HTTPException(status_code=400, detail='Choose CSV files for both inputs.')
     data = await upload.read(MAX_CSV_BYTES + 1)
     if len(data) > MAX_CSV_BYTES:
         raise HTTPException(status_code=413, detail='Each CSV must be no larger than 2 MiB.')
     try:
-        import pandas as pd
         return pd.read_csv(io.StringIO(data.decode('utf-8-sig')))
     except (UnicodeDecodeError, ValueError):
+        # pandas parser and empty-file errors are ValueError subclasses.
         raise HTTPException(status_code=400, detail='The upload must contain a valid UTF-8 CSV table.')
 
 
@@ -48,20 +52,16 @@ async def home():
 @app.post('/suggest_column_mapping/')
 async def column_suggestions(input_table: UploadFile = File(...),
                              template_table: UploadFile = File(...),
-                             suggestion: str = Form(None)):
-    mapper = _get_mapper()
-    frame = await _read_csv(input_table)
-    template = await _read_csv(template_table)
-    from utils.templates import main_template, revision_template
-    from utils.suggestion_cleaner import clean_suggestion
+                             suggestion: str | None = Form(None)):
+    mapper = get_mapper()
+    input_info = get_column_info(await read_csv(input_table))
+    template_info = get_column_info(await read_csv(template_table))
     try:
-        input_info = mapper.get_column_info(frame)
-        template_info = mapper.get_column_info(template)
         if suggestion:
             return mapper.suggest_column_mapping(input_info, template_info, revision_template, clean_suggestion(suggestion))
         return mapper.suggest_column_mapping(input_info, template_info, main_template)
-    except Exception:
-        raise HTTPException(status_code=400, detail='Could not create a preview from those CSV files.')
+    except ProviderError as error:
+        raise HTTPException(status_code=502, detail=f'{error} Try again or check the provider configuration.')
 
 
 @app.post('/column_mapper/')
