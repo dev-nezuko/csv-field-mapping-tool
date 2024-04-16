@@ -47,12 +47,12 @@ function App() {
     <form onSubmit={generate} className="upload-panel">
       <label htmlFor="source-csv">Source CSV<input id="source-csv" type="file" accept=".csv" onChange={e => setSource(e.target.files[0] || null)} /></label>
       <label htmlFor="template-csv">Template CSV<input id="template-csv" type="file" accept=".csv" onChange={e => setTemplate(e.target.files[0] || null)} /></label>
-      <button disabled={!source || !template || loading} type="submit">{loading ? 'Generating…' : 'Generate suggestions'}</button>
-      <small>Use synthetic data. Column names and sample values are sent to the configured AI provider. Maximum 2 MiB per CSV.</small>
+      <button disabled={!source || !template || loading} type="submit" aria-describedby="upload-hint">{loading ? 'Generating…' : 'Generate suggestions'}</button>
+      <p className="hint" id="upload-hint">{!(source && template) && 'Choose a source and a template CSV to enable generation. '}Use synthetic data. Column names and sample values are sent to the configured AI provider. Maximum 2 MiB per CSV.</p>
     </form>
     {error && <p role="alert" className="error">{error}</p>}
     {example && <p role="status" className="example">Example preview · illustrative mapping, loaded locally without an AI request.</p>}
-    <section className="preview-grid" aria-label="Mapping preview">
+    <section className="preview-grid" aria-label="Mapping preview" aria-busy={loading}>
       <article><h2><span>01</span> Mapping notes</h2><p>Review the suggested field relationships. Edited notes accompany your next provider request.</p>
         <label className="sr-only" htmlFor="mapping-notes">Mapping notes</label><textarea id="mapping-notes" value={suggestions} onChange={e => setSuggestions(e.target.value)} placeholder="Load the example or generate suggestions to begin." /></article>
       <article><h2><span>02</span> Python preview</h2><p>Editable code for inspection. This is untrusted generated output.</p>

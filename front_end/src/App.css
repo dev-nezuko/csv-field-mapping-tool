@@ -1,29 +1,52 @@
+:root {
+  --ink: #182a3a;
+  --muted: #4f6171;
+  --accent: #155e59;
+  --accent-soft: #e6efed;
+  --line: #dce3e8;
+  --paper: #f4f6f8;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
 * { box-sizing: border-box; }
-body { margin: 0; background: #f4f6f8; color: #182a3a; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-.workspace { max-width: 1200px; margin: auto; padding: 48px 32px 24px; }
-header { position: relative; max-width: 880px; margin-bottom: 30px; }
-.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .15em; color: #386d6b; }
-h1 { font-size: clamp(32px, 4vw, 48px); line-height: 1.1; letter-spacing: -.04em; margin: 18px 0; }
-header p { max-width: 650px; color: #526474; line-height: 1.6; }
-button { border: 0; border-radius: 7px; padding: 12px 18px; background: #155e59; color: white; font-weight: 600; cursor: pointer; font-size: 14px; }
-button.secondary { background: white; color: #155e59; border: 1px solid #b7ccca; }
-button:disabled { opacity: .5; cursor: not-allowed; }
-button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #398cce; outline-offset: 3px; }
-.notice { padding: 14px 18px; background: #e6efed; border-left: 3px solid #27756d; font-size: 14px; line-height: 1.5; margin-bottom: 22px; }
-.upload-panel { display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: 20px; padding: 24px; background: white; border: 1px solid #dce3e8; border-radius: 10px; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+.workspace { max-width: 1200px; margin: auto; padding: 48px 32px 24px; min-width: 0; }
+header { max-width: 880px; margin-bottom: 30px; overflow-wrap: anywhere; }
+.eyebrow { font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: .12em; color: #2f6563; }
+h1 { font-size: clamp(32px, 4vw, 48px); line-height: 1.1; letter-spacing: -.03em; margin: 18px 0; font-weight: 600; }
+header p { max-width: 650px; color: var(--muted); line-height: 1.6; }
+button { border: 0; border-radius: 7px; padding: 12px 18px; background: var(--accent); color: white; font: 600 14px var(--sans); cursor: pointer; }
+button:hover:not(:disabled) { background: #0f4a46; }
+button.secondary { background: white; color: var(--accent); border: 1px solid #b7ccca; }
+button.secondary:hover:not(:disabled) { background: var(--accent-soft); }
+button:disabled { opacity: .55; cursor: not-allowed; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #2b7bbd; outline-offset: 3px; }
+.notice { padding: 14px 18px; background: var(--accent-soft); border-left: 3px solid #27756d; font-size: 14px; line-height: 1.5; margin: 0 0 22px; overflow-wrap: anywhere; }
+.upload-panel { display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: 20px; padding: 24px; background: white; border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
 label { display: flex; flex-direction: column; gap: 12px; font-weight: 600; font-size: 14px; min-width: 0; }
-input { font-size: 13px; width: 100%; }
-small { grid-column: 1 / -1; color: #536575; line-height: 1.5; }
-.preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 22px; }
-article { padding: 24px; border: 1px solid #dce3e8; border-radius: 10px; background: white; min-width: 0; }
-h2 { margin: 0; font-size: 19px; } h2 span { font-size: 12px; color: #688b89; margin-right: 12px; }
-article p { color: #536575; font-size: 13px; line-height: 1.6; min-height: 42px; }
-textarea { resize: vertical; width: 100%; min-height: 235px; padding: 16px; border: 1px solid #d7e0e5; border-radius: 6px; background: #f8fafb; line-height: 1.7; color: #243c4d; font: 13px/1.7 ui-monospace, SFMono-Regular, monospace; }
+input { font: 13px var(--sans); width: 100%; }
+.hint { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 22px; min-width: 0; }
+.preview-grid[aria-busy="true"] textarea { opacity: .6; }
+article { padding: 24px; border: 1px solid var(--line); border-radius: 10px; background: white; min-width: 0; }
+h2 { margin: 0; font-size: 19px; font-weight: 600; }
+h2 span { font-family: var(--mono); font-size: 12px; color: #3f6563; margin-right: 12px; }
+article p { color: var(--muted); font-size: 13px; line-height: 1.6; min-height: 42px; }
+textarea { resize: vertical; width: 100%; min-height: 235px; padding: 16px; border: 1px solid #d7e0e5; border-radius: 6px; background: #f8fafb; color: #243c4d; font: 13px/1.7 var(--mono); }
+/* Wrapping would misstate Python indentation, so long code lines scroll instead. */
+textarea.code { white-space: pre; overflow-wrap: normal; overflow-x: auto; }
 article button { margin-top: 14px; }
-.example { color: #285b56; font-size: 13px; } .error { background: #fde9e8; color: #8b2424; padding: 16px; border-radius: 6px; }
-footer { margin-top: 28px; color: #61727f; font-size: 12px; }
-.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
-@media(max-width: 700px) { .workspace { padding: 28px 18px; } .upload-panel, .preview-grid { grid-template-columns: minmax(0, 1fr); } .upload-panel button { width: 100%; } textarea { min-height: 210px; } }
-
-.workspace, .upload-panel, .preview-grid { min-width: 0; }
-header, .notice, .example { overflow-wrap: anywhere; }
+.example { color: #285b56; font-size: 13px; overflow-wrap: anywhere; }
+.error { background: #fde9e8; color: #8b2424; padding: 16px; border-radius: 6px; }
+footer { margin-top: 28px; color: #5a6b78; font-size: 12px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+@media (max-width: 960px) {
+  .upload-panel { grid-template-columns: 1fr 1fr; }
+  .upload-panel button { grid-column: 1 / -1; justify-self: start; }
+}
+@media (max-width: 700px) {
+  .workspace { padding: 28px 16px; }
+  .upload-panel, .preview-grid { grid-template-columns: minmax(0, 1fr); }
+  .upload-panel button { width: 100%; }
+  textarea { min-height: 210px; }
+}

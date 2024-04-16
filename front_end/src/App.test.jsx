@@ -18,6 +18,9 @@ test('execution is unavailable and generation requires both CSV files', () => {
   render(<App />);
   expect(screen.getByRole('button', { name: 'Execution unavailable' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Generate suggestions' })).toBeDisabled();
+  expect(screen.getByText(/Choose a source and a template CSV/)).toBeInTheDocument();
+  chooseBothFiles();
+  expect(screen.queryByText(/Choose a source and a template CSV/)).not.toBeInTheDocument();
 });
 test('example loads locally and clearly labels illustrative output', () => {
   render(<App />);
