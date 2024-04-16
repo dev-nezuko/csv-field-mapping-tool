@@ -1,0 +1,4 @@
+fastapi==0.103.2
+python-dotenv
+python-multipart
+httpx>=0.24,<1
