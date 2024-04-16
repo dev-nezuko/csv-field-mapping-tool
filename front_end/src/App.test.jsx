@@ -1,9 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from './App';
 import { getCodeAndSuggestions } from './Apis';
-jest.mock('./Apis', () => ({ getCodeAndSuggestions: jest.fn() }));
+vi.mock('./Apis', () => ({ getCodeAndSuggestions: vi.fn() }));
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   window.history.replaceState(null, '', '/');
 });
 function chooseBothFiles() {

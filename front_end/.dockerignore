@@ -1,5 +1,7 @@
 node_modules
 build
+dist
+coverage
 .env
 .env.*
 *.db

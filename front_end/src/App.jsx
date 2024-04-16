@@ -1,24 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { getCodeAndSuggestions } from './Apis';
 import './App.css';
+
+const EXAMPLE_NOTES = 'customer_name → full_name\nemail_address → email\norder_total → amount\n\nReview column meanings and missing values before using this mapping.';
+const EXAMPLE_CODE = 'def map_columns(df):\n    return df.rename(columns={\n        "customer_name": "full_name",\n        "email_address": "email",\n        "order_total": "amount",\n    })';
+const startsWithExample = () => new URLSearchParams(window.location.search).get('demo') === '1';
 
 function App() {
   const [source, setSource] = useState(null);
   const [template, setTemplate] = useState(null);
-  const [suggestions, setSuggestions] = useState('');
-  const [code, setCode] = useState('');
+  const [example, setExample] = useState(startsWithExample);
+  const [suggestions, setSuggestions] = useState(() => (example ? EXAMPLE_NOTES : ''));
+  const [code, setCode] = useState(() => (example ? EXAMPLE_CODE : ''));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [example, setExample] = useState(false);
-  const loadExample = useCallback(() => {
-    setSuggestions('customer_name → full_name\nemail_address → email\norder_total → amount\n\nReview column meanings and missing values before using this mapping.');
-    setCode('def map_columns(df):\n    return df.rename(columns={\n        "customer_name": "full_name",\n        "email_address": "email",\n        "order_total": "amount",\n    })');
+  function loadExample() {
+    setSuggestions(EXAMPLE_NOTES);
+    setCode(EXAMPLE_CODE);
     setExample(true);
     setError('');
-  }, []);
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('demo') === '1') loadExample();
-  }, [loadExample]);
+  }
   async function generate(event) {
     event.preventDefault();
     if (!source || !template) return;

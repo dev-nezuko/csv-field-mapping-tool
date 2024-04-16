@@ -9,7 +9,7 @@ A React and FastAPI prototype for comparing source CSV columns with a target tem
 ```sh
 cd front_end
 npm ci --ignore-scripts
-npm start
+npm run dev
 ```
 
 Open http://localhost:3000 and choose **Load example**. This uses an illustrative mapping entirely in the browser; it needs neither an API key nor a running backend. Both preview panels are editable. Selecting two CSVs enables a provider request.
@@ -28,7 +28,7 @@ cd backend
 uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
-The client defaults to http://localhost:8000. Set `REACT_APP_API_BASE_URL` before starting/building React to change it. Backend CORS allows localhost:3000.
+The client defaults to http://localhost:8000. Set `VITE_API_BASE_URL` before starting or building the UI to change it. Backend CORS allows localhost:3000.
 
 | Endpoint | Behavior |
 | --- | --- |
@@ -58,7 +58,8 @@ They check that both former execution entry points cannot write a file, that the
 
 ```sh
 cd front_end
-CI=true npm test -- --watchAll=false --runInBand
+npm test
+npm run lint
 npm run build
 ```
 
